@@ -8,3 +8,5 @@ for file in ~/.{bashrc,bash_prompt,aliases,functions,path,dockerfunc,extra,expor
 	fi
 done
 unset file
+
+[[ -r "/usr/local/etc/profile.d/bash_completion.sh" ]] && . "/usr/local/etc/profile.d/bash_completion.sh"
