@@ -1,5 +1,5 @@
 .PHONY: all
-all: bin dotfiles etc ## Installs the bin and etc directory files and the dotfiles.
+all: bin usr dotfiles etc ## Installs the bin and etc directory files and the dotfiles.
 
 .PHONY: bin
 bin: ## Installs the bin directory files.
@@ -12,7 +12,7 @@ bin: ## Installs the bin directory files.
 .PHONY: dotfiles
 dotfiles: ## Installs the dotfiles.
 	# add aliases for dotfiles
-	for file in $(shell find $(CURDIR) -name ".*" -not -name ".gitignore" -not -name ".travis.yml" -not -name ".git" -not -name ".*.swp" -not -name ".gnupg"); do \
+	for file in $(shell find $(CURDIR) -name ".*" -not -name ".gitignore" -not -name ".travis.yml" -not -name ".git" -not -name ".github" -not -name ".*.swp" -not -name ".gnupg"); do \
 		f=$$(basename $$file); \
 		ln -sfn $$file $(HOME)/$$f; \
 	done; \
@@ -31,6 +31,11 @@ dotfiles: ## Installs the dotfiles.
 	fi;
 	mkdir -p $(HOME)/Pictures;
 	ln -snf $(CURDIR)/central-park.jpg $(HOME)/Pictures/central-park.jpg;
+	mkdir -p $(HOME)/.config/fontconfig;
+	ln -snf $(CURDIR)/.config/fontconfig/fontconfig.conf $(HOME)/.config/fontconfig/fontconfig.conf;
+	xrdb -merge $(HOME)/.Xdefaults || true
+	xrdb -merge $(HOME)/.Xresources || true
+	fc-cache -f -v || true
 
 .PHONY: etc
 etc: ## Installs the etc directory files.
@@ -42,7 +47,17 @@ etc: ## Installs the etc directory files.
 	done
 	systemctl --user daemon-reload || true
 	sudo systemctl daemon-reload
+	sudo systemctl enable systemd-networkd systemd-resolved
+	sudo systemctl start systemd-networkd systemd-resolved
 	sudo ln -snf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+
+.PHONY: usr
+usr: ## Installs the usr directory files.
+	for file in $(shell find $(CURDIR)/usr -type f -not -name ".*.swp"); do \
+		f=$$(echo $$file | sed -e 's|$(CURDIR)||'); \
+		sudo mkdir -p $$(dirname $$f); \
+		sudo ln -f $$file $$f; \
+	done
 
 .PHONY: test
 test: shellcheck ## Runs all the tests on the files in the repository.
