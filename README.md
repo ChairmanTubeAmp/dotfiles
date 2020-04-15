@@ -1,8 +1,24 @@
-## dotfiles
+# dotfiles
 
-[![Travis CI](https://travis-ci.org/jessfraz/dotfiles.svg?branch=master)](https://travis-ci.org/jessfraz/dotfiles)
+[![Travis CI](https://img.shields.io/travis/jessfraz/dotfiles.svg?style=for-the-badge)](https://travis-ci.org/jessfraz/dotfiles)
 
-**To install:**
+**Table of Contents**
+
+<!-- toc -->
+
+- [About](#about)
+  * [Installing](#installing)
+  * [Customizing](#customizing)
+- [Resources](#resources)
+  * [`.vim`](#vim)
+- [Contributing](#contributing)
+  * [Running the tests](#running-the-tests)
+
+<!-- tocstop -->
+
+## About
+
+### Installing
 
 ```console
 $ make
@@ -10,7 +26,7 @@ $ make
 
 This will create symlinks from this repo to your home folder.
 
-**To customize:**
+### Customizing
 
 Save env vars, etc in a `.extra` file, that looks something like
 this:
@@ -37,12 +53,16 @@ export GMAIL_NAME="Your Name"
 export GMAIL_FROM=from-email@you.com
 ```
 
-#### `.vim`
+## Resources
+
+### `.vim`
 
 For my `.vimrc` and `.vim` dotfiles see
 [github.com/jessfraz/.vim](https://github.com/jessfraz/.vim).
 
-### Tests
+## Contributing
+
+### Running the tests
 
 The tests use [shellcheck](https://github.com/koalaman/shellcheck). You don't
 need to install anything. They run in a container.

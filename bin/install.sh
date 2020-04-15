@@ -9,7 +9,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 # Choose a user account to use for this installation
 get_user() {
-	if [ -z "${TARGET_USER-}" ]; then
+	if [[ -z "${TARGET_USER-}" ]]; then
 		mapfile -t options < <(find /home/* -maxdepth 0 -printf "%f\\n" -type d)
 		# if there is only one option just use that user
 		if [ "${#options[@]}" -eq "1" ]; then
@@ -19,7 +19,7 @@ get_user() {
 		fi
 
 		# iterate through the user options and print them
-		PS3='Which user account should be used? '
+		PS3='command -v user account should be used? '
 
 		select opt in "${options[@]}"; do
 			readonly TARGET_USER=$opt
@@ -53,12 +53,6 @@ setup_sources_min() {
 	deb-src http://ppa.launchpad.net/git-core/ppa/ubuntu xenial main
 	EOF
 
-	# neovim
-	cat <<-EOF > /etc/apt/sources.list.d/neovim.list
-	deb http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu xenial main
-	deb-src http://ppa.launchpad.net/neovim-ppa/unstable/ubuntu xenial main
-	EOF
-
 	# iovisor/bcc-tools
 	cat <<-EOF > /etc/apt/sources.list.d/iovisor.list
 	deb https://repo.iovisor.org/apt/xenial xenial main
@@ -66,9 +60,6 @@ setup_sources_min() {
 
 	# add the git-core ppa gpg key
 	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys E1DD270288B4E6030699E45FA1715D88E1DF1F24
-
-	# add the neovim ppa gpg key
-	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 9DBB0BE9366964F134855E2255F96FCF8231B6DD
 
 	# add the iovisor/bcc-tools gpg key
 	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 648A4A16A23015EEF4A66B8E4052245BD4284CDD
@@ -103,13 +94,6 @@ setup_sources() {
 	deb-src http://ppa.launchpad.net/yubico/stable/ubuntu xenial main
 	EOF
 
-	# tlp: Advanced Linux Power Management
-	cat <<-EOF > /etc/apt/sources.list.d/tlp.list
-	# tlp: Advanced Linux Power Management
-	# http://linrunner.de/en/tlp/docs/tlp-linux-advanced-power-management.html
-	deb http://repo.linrunner.de/debian sid main
-	EOF
-
 	# Create an environment variable for the correct distribution
 	CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
 	export CLOUD_SDK_REPO
@@ -132,9 +116,6 @@ setup_sources() {
 
 	# add the yubico ppa gpg key
 	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 3653E21064B19D134466702E43D5C49532CBA1A9
-
-	# add the tlp apt-repo gpg key
-	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 6B283E95745A6D903009F7CA641EED65CD4E8809
 }
 
 base_min() {
@@ -170,7 +151,8 @@ base_min() {
 		make \
 		mount \
 		net-tools \
-		neovim \
+		policykit-1 \
+		silversearcher-ag \
 		ssh \
 		strace \
 		sudo \
@@ -178,6 +160,7 @@ base_min() {
 		tree \
 		tzdata \
 		unzip \
+		vim \
 		xz-utils \
 		zip \
 		--no-install-recommends
@@ -198,7 +181,6 @@ base() {
 	apt -y upgrade
 
 	apt install -y \
-		alsa-utils \
 		apparmor \
 		bridge-utils \
 		cgroupfs-mount \
@@ -213,12 +195,8 @@ base() {
 		libpam-systemd \
 		libseccomp-dev \
 		pinentry-curses \
-		rxvt-unicode-256color \
 		scdaemon \
 		systemd \
-		usbmuxd \
-		xclip \
-		xcompmgr \
 		--no-install-recommends
 
 	setup_sudo
@@ -248,7 +226,17 @@ install_dropbear() {
 	cp "/home/${TARGET_USER}/.ssh/authorized_keys" /etc/dropbear-initramfs/authorized_keys
 	sed -i 's/ssh-/no-port-forwarding,no-agent-forwarding,no-X11-forwarding,command="\/bin\/cryptroot-unlock" ssh-/g' /etc/dropbear-initramfs/authorized_keys
 
+	echo
+	echo "Updated config in /etc/dropbear-initramfs/config:"
+	cat /etc/dropbear-initramfs/config
+	echo
+
+	echo "Updated authorized_keys in /etc/dropbear-initramfs/authorized_keys:"
+	cat /etc/dropbear-initramfs/authorized_keys
+	echo
+
 	echo "Dropbear has been installed and configured."
+	echo
 	echo "You will now want to update your initramfs:"
 	printf "\\tupdate-initramfs -u\\n"
 }
@@ -275,7 +263,7 @@ setup_sudo() {
 
 	# add go path to secure path
 	{ \
-		echo -e "Defaults	secure_path=\"/usr/local/go/bin:/home/${TARGET_USER}/.go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/bcc/tools\""; \
+		echo -e "Defaults	secure_path=\"/usr/local/go/bin:/home/${TARGET_USER}/.go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/bcc/tools:/home/${TARGET_USER}/.cargo/bin\""; \
 		echo -e 'Defaults	env_keep += "ftp_proxy http_proxy https_proxy no_proxy GOPATH EDITOR"'; \
 		echo -e "${TARGET_USER} ALL=(ALL) NOPASSWD:ALL"; \
 		echo -e "${TARGET_USER} ALL=NOPASSWD: /sbin/ifconfig, /sbin/ifup, /sbin/ifdown, /sbin/ifquery"; \
@@ -285,7 +273,7 @@ setup_sudo() {
 	# that way things are removed on reboot
 	# i like things clean but you may not want this
 	mkdir -p "/home/$TARGET_USER/Downloads"
-	echo -e "\\n# tmpfs for downloads\\ntmpfs\\t/home/${TARGET_USER}/Downloads\\ttmpfs\\tnodev,nosuid,size=2G\\t0\\t0" >> /etc/fstab
+	echo -e "\\n# tmpfs for downloads\\ntmpfs\\t/home/${TARGET_USER}/Downloads\\ttmpfs\\tnodev,nosuid,size=5G\\t0\\t0" >> /etc/fstab
 }
 
 # install rust
@@ -300,7 +288,7 @@ install_golang() {
 	export GO_SRC=/usr/local/go
 
 	# if we are passing the version
-	if [[ ! -z "$1" ]]; then
+	if [[ -n "$1" ]]; then
 		GO_VERSION=$1
 	fi
 
@@ -326,8 +314,9 @@ install_golang() {
 	(
 	set -x
 	set +e
-	go get github.com/golang/lint/golint
+	go get golang.org/x/lint/golint
 	go get golang.org/x/tools/cmd/cover
+	go get golang.org/x/tools/gopls
 	go get golang.org/x/review/git-codereview
 	go get golang.org/x/tools/cmd/goimports
 	go get golang.org/x/tools/cmd/gorename
@@ -345,6 +334,7 @@ install_golang() {
 	go get github.com/genuinetools/udict
 	go get github.com/genuinetools/weather
 
+	go get github.com/jessfraz/gmailfilters
 	go get github.com/jessfraz/junk/sembump
 	go get github.com/jessfraz/secping
 	go get github.com/jessfraz/ship
@@ -358,7 +348,7 @@ install_golang() {
 	go get github.com/nsf/gocode
 	go get github.com/rogpeppe/godef
 
-	aliases=( Azure/acs-engine genuinetools/contained.af genuinetools/binctr genuinetools/img docker/docker moby/buildkit opencontainers/runc )
+	aliases=( genuinetools/contained.af genuinetools/binctr genuinetools/img docker/docker moby/buildkit opencontainers/runc )
 	for project in "${aliases[@]}"; do
 		owner=$(dirname "$project")
 		repo=$(basename "$project")
@@ -466,10 +456,30 @@ install_scripts() {
 
 # install stuff for i3 window manager
 install_wmapps() {
-	local pkgs=( feh i3 i3lock i3status scrot suckless-tools )
-
 	apt update || true
-	apt install -y "${pkgs[@]}" --no-install-recommends
+	apt install -y \
+		bluez \
+		bluez-firmware \
+		feh \
+		i3 \
+		i3lock \
+		i3status \
+		pulseaudio \
+		pulseaudio-module-bluetooth \
+		pulsemixer \
+		rofi \
+		rxvt-unicode-256color \
+		scrot \
+		usbmuxd \
+		xclip \
+		xcompmgr \
+		--no-install-recommends
+
+	# start and enable pulseaudio
+	systemctl --user daemon-reload
+	systemctl --user enable pulseaudio.service
+	systemctl --user enable pulseaudio.socket
+	systemctl --user start pulseaudio.service
 
 	# update clickpad settings
 	mkdir -p /etc/X11/xorg.conf.d/
@@ -504,6 +514,9 @@ get_dotfiles() {
 
 	cd "${HOME}/dotfiles"
 
+	# set the correct origin
+	git remote set-url origin git@github.com:jessfraz/dotfiles.git
+
 	# installs all the things
 	make
 
@@ -511,10 +524,6 @@ get_dotfiles() {
 	# systemctl --user enable dbus.socket
 
 	sudo systemctl enable "i3lock@${TARGET_USER}"
-	sudo systemctl enable suspend-sedation.service
-
-	sudo systemctl enable systemd-networkd systemd-resolved
-	sudo systemctl start systemd-networkd systemd-resolved
 
 	cd "$HOME"
 	mkdir -p ~/Pictures/Screenshots
@@ -536,27 +545,28 @@ install_vim() {
 	make install
 	)
 
-	# update alternatives to neovim
-	sudo update-alternatives --install /usr/bin/vi vi "$(which nvim)" 60
+	# update alternatives to vim
+	sudo update-alternatives --install /usr/bin/vi vi "$(command -v vim)" 60
 	sudo update-alternatives --config vi
-	sudo update-alternatives --install /usr/bin/vim vim "$(which nvim)" 60
-	sudo update-alternatives --config vim
-	sudo update-alternatives --install /usr/bin/editor editor "$(which nvim)" 60
+	sudo update-alternatives --install /usr/bin/editor editor "$(command -v vim)" 60
 	sudo update-alternatives --config editor
-
-	# install things needed for deoplete for vim
-	sudo apt update || true
-
-	sudo apt install -y \
-		python3-pip \
-		python3-setuptools \
-		--no-install-recommends
-
-	pip3 install -U \
-		setuptools \
-		wheel \
-		neovim
 	)
+}
+
+install_tools() {
+	echo "Installing golang..."
+	echo
+	install_golang;
+
+	echo
+	echo "Installing rust..."
+	echo
+	install_rust;
+
+	echo
+	echo "Installing scripts..."
+	echo
+	sudo install.sh scripts;
 }
 
 usage() {
@@ -571,6 +581,7 @@ usage() {
 	echo "  golang                              - install golang and packages"
 	echo "  rust                                - install rust"
 	echo "  scripts                             - install scripts"
+	echo "  tools                               - install golang, rust, and scripts"
 	echo "  dropbear                            - install and configure dropbear initramfs"
 }
 
@@ -617,6 +628,8 @@ main() {
 		install_golang "$2"
 	elif [[ $cmd == "scripts" ]]; then
 		install_scripts
+	elif [[ $cmd == "tools" ]]; then
+		install_tools
 	elif [[ $cmd == "dropbear" ]]; then
 		check_is_sudo
 

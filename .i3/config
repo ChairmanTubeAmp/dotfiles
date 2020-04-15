@@ -4,7 +4,7 @@
 
 set $mod Mod4
 set $term urxvt
-set $menu i3-dmenu-desktop
+set $menu rofi -show drun -theme "solarized_alternate"
 set $barcmd i3status
 set $lockcmd i3lock
 
@@ -12,7 +12,7 @@ set $lockcmd i3lock
 # is used in the bar {} block below.
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
-font pango:Monospace 16
+font pango:Monospace 4
 
 # HiDPI for sway
 # output eDP-1 scale 1
@@ -35,6 +35,9 @@ font pango:Monospace 16
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
+floating_minimum_size 150 x 150
+floating_maximum_size 2500 x 1500
+
 # start a terminal
 bindsym $mod+Return exec $term
 
@@ -55,8 +58,11 @@ for_window [class="Gimp"] floating enable
 for_window [class="google-chrome"] floating enable
 for_window [class="Google-chrome"] floating enable
 for_window [class="Keybase"] floating enable
+for_window [class="Kicad"] floating enable
+for_window [class="Logic"] floating enable
 for_window [class="Neoman"] floating enable
 for_window [class="NES"] floating enable
+for_window [class="OpenSCAD"] floating enable
 for_window [class="Pidgin"] floating enable
 for_window [class="Portal"] floating enable
 for_window [class="RStudio"] floating enable
@@ -64,11 +70,13 @@ for_window [class="Skype"] floating enable
 for_window [class="Slack"] floating enable
 for_window [class="Steam"] floating enable
 for_window [class="Tor Browser"] floating enable
+for_window [class="Virt-manager"] floating enable
 for_window [class="Virt-viewer"] floating enable
 for_window [class="VirtualBox"] floating enable
 for_window [class="vlc"] floating enable
 for_window [class="Wine"] floating enable
 for_window [class="Wireshark"] floating enable
+for_window [class="zoom"] floating enable
 
 # lock screen
 bindsym $mod+l exec $lockcmd -c 111111
@@ -151,9 +159,9 @@ bindsym $mod+Shift+9 move container to workspace 9
 bindsym $mod+Shift+0 move container to workspace 10
 
 # audio controls
-bindsym XF86AudioRaiseVolume exec amixer set Master 5%+ #increase sound volume
-bindsym XF86AudioLowerVolume exec amixer set Master 5%- #decrease sound volume
-bindsym XF86AudioMute exec amixer set Master 1+ toggle # mute sound
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume 0 +5% #increase sound volume
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume 0 -5% #decrease sound volume
+bindsym XF86AudioMute exec pactl set-sink-mute 0 toggle # mute sound
 bindsym XF86AudioMicMute exec amixer set Capture toggle # mute mic
 
 # screen brightness controls
@@ -209,7 +217,7 @@ bindsym $mod+r mode "resize"
 
 # i3status bar config
 bar {
-	font pango:monospace 16
+	font pango:monospace 3
 	status_command $barcmd --config ~/.i3/status.conf
 }
 
