@@ -188,4 +188,9 @@
 	#fetch = +refs/pull/*/head:refs/remotes/origin/pull/*
 
 [commit]
-	gpgsign = true
+	gpgsign = false
+[user]
+	name = Martín Beauchamp
+	email = martinb@parsleyhealth.com
+[github]
+	user = ChairmanTubeAmp
