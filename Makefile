@@ -12,7 +12,7 @@ bin: ## Installs the bin directory files.
 .PHONY: dotfiles
 dotfiles: ## Installs the dotfiles.
 	# add aliases for dotfiles
-	for file in $(shell find $(CURDIR) -name ".*" -not -name ".gitignore" -not -name ".travis.yml" -not -name ".git" -not -name ".github" -not -name ".*.swp" -not -name ".gnupg"); do \
+	for file in $(shell find $(CURDIR) -name ".*" -not -name ".gitignore" -not -name ".travis.yml" -not -name ".git" -not -name ".github" -not -name ".*.swp" -not -name ".gnupg" -not -name ".git-completion.bash"); do \
 		f=$$(basename $$file); \
 		ln -sfn $$file $(HOME)/$$f; \
 	done; \
@@ -36,6 +36,7 @@ dotfiles: ## Installs the dotfiles.
 	xrdb -merge $(HOME)/.Xdefaults || true
 	xrdb -merge $(HOME)/.Xresources || true
 	fc-cache -f -v || true
+	ln -snf /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash $(HOME)/.git-completion.bash
 
 .PHONY: etc
 etc: ## Installs the etc directory files.

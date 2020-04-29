@@ -157,6 +157,12 @@ if [[ -f "${HOME}/.travis/travis.sh" ]]; then
 	source "${HOME}/.travis/travis.sh"
 fi
 
+# source kind bash completion
+if hash kind 2>/dev/null; then
+	# shellcheck source=/dev/null
+	source <(kind completion bash)
+fi
+
 for file in ~/.{bash_prompt,aliases,functions,path,dockerfunc,extra,exports,git-completion.bash}; do
 	if [[ -r "$file" ]] && [[ -f "$file" ]]; then
 		# shellcheck source=/dev/null
@@ -164,4 +170,3 @@ for file in ~/.{bash_prompt,aliases,functions,path,dockerfunc,extra,exports,git-
 	fi
 done
 unset file
-
