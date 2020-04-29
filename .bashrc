@@ -170,3 +170,12 @@ for file in ~/.{bash_prompt,aliases,functions,path,dockerfunc,extra,exports,git-
 	fi
 done
 unset file
+
+# source completions from brew apps
+for file in /usr/local/etc/bash_completion.d/*; do
+	if [[ -r "$file" ]] && [[ -f "$file" ]]; then
+		# shellcheck source=/dev/null
+		source "$file"
+	fi
+done
+unset file
